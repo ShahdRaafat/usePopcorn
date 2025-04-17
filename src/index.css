@@ -54,10 +54,30 @@ body {
   max-width: 42rem;
   background-color: var(--color-background-500);
   border-radius: 0.9rem;
-  /* overflow: scroll; */
+  overflow-y: scroll;
   position: relative;
+
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: rgb(165, 159, 159) var(--color-background-500); /* Firefox */
 }
 
+.box::-webkit-scrollbar {
+  width: 8px;
+}
+
+.box::-webkit-scrollbar-track {
+  background: white;
+  border-radius: 10px;
+}
+
+.box::-webkit-scrollbar-thumb {
+  background: black;
+  border-radius: 10px;
+}
+
+.box::-webkit-scrollbar-thumb:hover {
+  background: black;
+}
 .loader {
   text-align: center;
   text-transform: uppercase;

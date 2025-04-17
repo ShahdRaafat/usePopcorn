@@ -51,8 +51,8 @@ const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
 
 export default function App() {
-  const [movies, setMovies] = useState(tempMovieData);
-  const [watched, setWatched] = useState(tempWatchedData);
+  const [movies, setMovies] = useState([]);
+  const [watched, setWatched] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
@@ -71,13 +71,15 @@ export default function App() {
   }
   useEffect(
     function () {
+      const controller = new AbortController();
       async function fetchMovies() {
         try {
           setIsLoading(true);
           setError("");
 
           const res = await fetch(
-            `https://api.watchmode.com/v1/autocomplete-search/?apiKey=${key}&search_value=${query}`
+            `https://api.watchmode.com/v1/autocomplete-search/?apiKey=${key}&search_value=${query}`,
+            { signal: controller.signal }
           );
 
           if (!res.ok)
@@ -88,9 +90,12 @@ export default function App() {
           if (data.results.length === 0) throw new Error("No Movies Found");
 
           setMovies(data.results);
+          setError("");
         } catch (err) {
-          console.error(err.message);
-          setError(err.message);
+          if (err.name !== "AbortError") {
+            console.log(err.message);
+            setError(err.message);
+          }
         } finally {
           setIsLoading(false);
         }
@@ -100,7 +105,11 @@ export default function App() {
         setError("");
         return;
       }
+      handleCloseMovie();
       fetchMovies();
+      return function () {
+        controller.abort();
+      };
     },
     [query]
   );
@@ -244,6 +253,22 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
   }
   useEffect(
     function () {
+      function callback(e) {
+        if (e.code === "Escape") {
+          onCloseMovie();
+        }
+      }
+
+      document.addEventListener("keydown", callback);
+
+      return function () {
+        document.removeEventListener("keydown", callback);
+      };
+    },
+    [onCloseMovie]
+  );
+  useEffect(
+    function () {
       async function getMovieDetails() {
         setIsLoading(true);
         const res = await fetch(
@@ -269,6 +294,10 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
     function () {
       if (!movie.title) return;
       document.title = movie.title;
+
+      return function () {
+        document.title = "usePopcorn";
+      };
     },
     [movie]
   );
